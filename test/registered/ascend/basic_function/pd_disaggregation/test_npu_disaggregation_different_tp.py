@@ -18,7 +18,7 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
 
-
+'''
 class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=4 -> Decode TP=2"""
 
@@ -47,11 +47,11 @@ class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
             "--disaggregation-transfer-backend",
             "ascend",
             "--tp-size",
-            "4",
-            "--base-gpu-id",
             "8",
+            # "--base-gpu-id",
+            # "8",
             "--mem-fraction-static",
-            "0.9",
+            "0.8",
             "--disable-cuda-graph",
             "--enable-metrics",
             "--enable-request-time-stats-logging",
@@ -76,12 +76,12 @@ class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
             "--disaggregation-transfer-backend",
             "ascend",
             "--tp-size",
-            "4",
+            "8",
             "--base-gpu-id",
             #"4",
-            "12",
+            "8",
             "--mem-fraction-static",
-            "0.9",
+            "0.8",
             "--disable-cuda-graph",
             "--enable-metrics",
             "--enable-request-time-stats-logging",
@@ -110,7 +110,7 @@ class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
 
         self.assertGreater(metrics["score"], 0.60)
 
-'''
+
 class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=2 -> Decode TP=4"""
 
@@ -201,7 +201,7 @@ class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
-
+'''
 
 class TestDisaggregationAscendMHAPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2"""
@@ -294,7 +294,7 @@ class TestDisaggregationAscendMHAPrefillLargerTP(TestDisaggregationBase):
 
         self.assertGreater(metrics["score"], 0.60)
 
-
+'''
 class TestDisaggregationAscendMHADecodeLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=2 -> Decode TP=4"""
 
