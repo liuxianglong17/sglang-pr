@@ -241,7 +241,7 @@ class BaseTestTokenizerWatchdog:
                 requests.post(
                     DEFAULT_URL_FOR_TEST + "/generate",
                     json={
-                        "text": "Hello, please repeat this sentence for 1000 times.",
+                        "text": "Hello, please repeat this sentence for 100 times.",
                         "sampling_params": {"max_new_tokens": 100, "temperature": 0},
                     },
                     timeout=40,
@@ -296,7 +296,7 @@ class BaseTestSchedulerInitWatchdog:
                 requests.post(
                     DEFAULT_URL_FOR_TEST + "/generate",
                     json={
-                        "text": "Hello, please repeat this sentence for 1000 times.",
+                        "text": "Hello, please repeat this sentence for 100 times.",
                         "sampling_params": {"max_new_tokens": 100, "temperature": 0},
                     },
                     timeout=40,
