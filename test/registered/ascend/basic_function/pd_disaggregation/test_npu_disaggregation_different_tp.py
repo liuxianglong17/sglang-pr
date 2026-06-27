@@ -1,0 +1,586 @@
+import os
+import unittest
+from types import SimpleNamespace
+
+from sglang.test.ascend.test_ascend_utils import (
+    DEEPSEEK_V2_LITE_W8A8_WEIGHTS_PATH,
+    LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH,
+)
+from sglang.test.ci.ci_register import register_npu_ci
+from sglang.test.run_eval import run_eval
+from sglang.test.server_fixtures.disaggregation_fixture import (
+    PDDisaggregationServerBase,
+)
+from sglang.test.test_utils import (
+    DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+    popen_launch_pd_server,
+)
+
+register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
+
+
+class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
+    """MLA model: Prefill TP=4 -> Decode TP=2"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = DEEPSEEK_V2_LITE_W8A8_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--base-gpu-id",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"Evaluation metrics: {metrics}")
+
+        self.assertGreater(metrics["score"], 0.60)
+
+
+class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
+    """MLA model: Prefill TP=2 -> Decode TP=4"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = DEEPSEEK_V2_LITE_W8A8_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--base-gpu-id",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"Evaluation metrics: {metrics}")
+
+        self.assertGreater(metrics["score"], 0.60)
+
+
+class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
+    """MHA model: Prefill TP=4 -> Decode TP=2"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--base-gpu-id",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"Evaluation metrics: {metrics}")
+
+        self.assertGreater(metrics["score"], 0.60)
+
+
+class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
+    """MHA model: Prefill TP=2 -> Decode TP=4"""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--base-gpu-id",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668"}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"Evaluation metrics: {metrics}")
+
+        self.assertGreater(metrics["score"], 0.60)
+
+
+STAGING_ENV = {
+    "SGLANG_DISAGG_STAGING_BUFFER": "1",
+    "SGLANG_DISAGG_STAGING_BUFFER_SIZE_MB": "64",
+    "SGLANG_DISAGG_STAGING_POOL_SIZE_MB": "1024",
+}
+
+
+class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase):
+    """MHA model: Prefill TP=4 -> Decode TP=2 with staging buffer enabled."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668", **STAGING_ENV}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--base-gpu-id",
+            "4",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668", **STAGING_ENV}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"[Staging PrefillLargerTP] Evaluation metrics: {metrics}")
+        self.assertGreater(metrics["score"], 0.60)
+
+
+class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
+    """MHA model: Prefill TP=2 -> Decode TP=4 with staging buffer enabled."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+
+        cls.start_prefill()
+        cls.start_decode()
+
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
+
+        cls.launch_lb()
+
+    @classmethod
+    def start_prefill(cls):
+        prefill_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "prefill",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668", **STAGING_ENV}
+        cls.process_prefill = popen_launch_pd_server(
+            cls.model,
+            cls.prefill_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=prefill_args,
+            env=env,
+        )
+
+    @classmethod
+    def start_decode(cls):
+        decode_args = [
+            "--trust-remote-code",
+            "--attention-backend",
+            "ascend",
+            "--disaggregation-mode",
+            "decode",
+            "--disaggregation-transfer-backend",
+            "ascend",
+            "--disaggregation-bootstrap-port",
+            cls.bootstrap_port,
+            "--tp-size",
+            "4",
+            "--base-gpu-id",
+            "2",
+            "--mem-fraction-static",
+            "0.9",
+            "--disable-cuda-graph",
+            "--enable-metrics",
+            "--enable-request-time-stats-logging",
+        ]
+        env = {**os.environ, "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24668", **STAGING_ENV}
+        cls.process_decode = popen_launch_pd_server(
+            cls.model,
+            cls.decode_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=decode_args,
+            env=env,
+        )
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=128,
+        )
+        metrics = run_eval(args)
+        print(f"[Staging DecodeLargerTP] Evaluation metrics: {metrics}")
+        self.assertGreater(metrics["score"], 0.60)
+
+
+if __name__ == "__main__":
+    unittest.main()
