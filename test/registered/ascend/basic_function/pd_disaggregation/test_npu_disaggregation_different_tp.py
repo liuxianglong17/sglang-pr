@@ -202,7 +202,7 @@ class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
 
         self.assertGreater(metrics["score"], 0.60)
 '''
-
+'''
 class TestDisaggregationAscendMHAPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2"""
 
@@ -385,7 +385,7 @@ class TestDisaggregationAscendMHADecodeLargerTP(TestDisaggregationBase):
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
-
+'''
 
 STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_BUFFER": "1",
@@ -393,7 +393,7 @@ STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_POOL_SIZE_MB": "1024",
 }
 
-'''
+
 class TestDisaggregationAscendStagingPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2 with staging buffer enabled."""
 
@@ -574,7 +574,7 @@ class TestDisaggregationAscendStagingDecodeLargerTP(TestDisaggregationBase):
         metrics = run_eval(args)
         print(f"[Staging DecodeLargerTP] Evaluation metrics: {metrics}")
         self.assertGreater(metrics["score"], 0.60)
-'''
+
 
 if __name__ == "__main__":
     unittest.main()
