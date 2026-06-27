@@ -10,9 +10,7 @@ DEEPSEEK_V2_LITE_W8A8_WEIGHTS_PATH="/home/weights/DeepSeek-V2-Lite-W8A8"
 LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH="/home/weights/Llama-3.1-8B-Instruct"
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.run_eval import run_eval
-from sglang.test.server_fixtures.disaggregation_fixture import (
-    PDDisaggregationServerBase,
-)
+from sglang.test.ascend.disaggregation_utils import TestDisaggregationBase
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     popen_launch_pd_server,
@@ -21,7 +19,7 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
 
 
-class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
+class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=4 -> Decode TP=2"""
 
     @classmethod
@@ -48,8 +46,6 @@ class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -79,8 +75,6 @@ class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -103,7 +97,7 @@ class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -117,7 +111,7 @@ class TestDisaggregationAscendPrefillLargerTP(PDDisaggregationServerBase):
         self.assertGreater(metrics["score"], 0.60)
 
 
-class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
+class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=2 -> Decode TP=4"""
 
     @classmethod
@@ -144,8 +138,6 @@ class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -175,8 +167,6 @@ class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -199,7 +189,7 @@ class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -212,8 +202,8 @@ class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
 
         self.assertGreater(metrics["score"], 0.60)
 
-'''
-class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
+
+class TestDisaggregationAscendMHAPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2"""
 
     @classmethod
@@ -240,8 +230,6 @@ class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -271,8 +259,6 @@ class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -295,7 +281,7 @@ class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -309,7 +295,7 @@ class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
         self.assertGreater(metrics["score"], 0.60)
 
 
-class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
+class TestDisaggregationAscendMHADecodeLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=2 -> Decode TP=4"""
 
     @classmethod
@@ -336,8 +322,6 @@ class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -367,8 +351,6 @@ class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -391,7 +373,7 @@ class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -403,7 +385,7 @@ class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
-'''
+
 
 STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_BUFFER": "1",
@@ -411,8 +393,8 @@ STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_POOL_SIZE_MB": "1024",
 }
 
-'''
-class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase):
+
+class TestDisaggregationAscendStagingPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2 with staging buffer enabled."""
 
     @classmethod
@@ -439,8 +421,6 @@ class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase)
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -470,8 +450,6 @@ class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase)
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -494,7 +472,7 @@ class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase)
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -507,7 +485,7 @@ class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase)
         self.assertGreater(metrics["score"], 0.60)
 
 
-class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
+class TestDisaggregationAscendStagingDecodeLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=2 -> Decode TP=4 with staging buffer enabled."""
 
     @classmethod
@@ -534,8 +512,6 @@ class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -565,8 +541,6 @@ class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
             "decode",
             "--disaggregation-transfer-backend",
             "ascend",
-            "--disaggregation-bootstrap-port",
-            cls.bootstrap_port,
             "--tp-size",
             "4",
             "--base-gpu-id",
@@ -589,7 +563,7 @@ class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
+            base_url=self.lb_url,
             model=self.model,
             eval_name="gsm8k",
             api="completion",
@@ -600,7 +574,7 @@ class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
         metrics = run_eval(args)
         print(f"[Staging DecodeLargerTP] Evaluation metrics: {metrics}")
         self.assertGreater(metrics["score"], 0.60)
-'''
+
 
 if __name__ == "__main__":
     unittest.main()
