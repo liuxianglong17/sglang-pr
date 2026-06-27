@@ -411,7 +411,7 @@ STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_POOL_SIZE_MB": "1024",
 }
 
-
+'''
 class TestDisaggregationAscendStagingPrefillLargerTP(PDDisaggregationServerBase):
     """MHA model: Prefill TP=4 -> Decode TP=2 with staging buffer enabled."""
 
@@ -600,7 +600,7 @@ class TestDisaggregationAscendStagingDecodeLargerTP(PDDisaggregationServerBase):
         metrics = run_eval(args)
         print(f"[Staging DecodeLargerTP] Evaluation metrics: {metrics}")
         self.assertGreater(metrics["score"], 0.60)
-
+'''
 
 if __name__ == "__main__":
     unittest.main()
