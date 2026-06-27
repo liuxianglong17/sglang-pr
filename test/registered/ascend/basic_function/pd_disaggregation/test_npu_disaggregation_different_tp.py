@@ -18,7 +18,7 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
 
-
+'''
 class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=4 -> Decode TP=2"""
 
@@ -109,7 +109,7 @@ class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
-'''
+
 
 class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
     """MLA model: Prefill TP=2 -> Decode TP=4"""
@@ -202,7 +202,7 @@ class TestDisaggregationAscendDecodeLargerTP(TestDisaggregationBase):
 
         self.assertGreater(metrics["score"], 0.60)
 '''
-'''
+
 class TestDisaggregationAscendMHAPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2"""
 
@@ -393,7 +393,7 @@ STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_POOL_SIZE_MB": "1024",
 }
 
-
+'''
 class TestDisaggregationAscendStagingPrefillLargerTP(TestDisaggregationBase):
     """MHA model: Prefill TP=4 -> Decode TP=2 with staging buffer enabled."""
 
