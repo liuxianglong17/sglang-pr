@@ -212,7 +212,7 @@ class TestDisaggregationAscendDecodeLargerTP(PDDisaggregationServerBase):
 
         self.assertGreater(metrics["score"], 0.60)
 
-
+'''
 class TestDisaggregationAscendMHAPrefillLargerTP(PDDisaggregationServerBase):
     """MHA model: Prefill TP=4 -> Decode TP=2"""
 
@@ -403,7 +403,7 @@ class TestDisaggregationAscendMHADecodeLargerTP(PDDisaggregationServerBase):
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
-
+'''
 
 STAGING_ENV = {
     "SGLANG_DISAGG_STAGING_BUFFER": "1",

@@ -111,6 +111,9 @@ LLAMA_2_7B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "LLM-Research/Llama-2-
 LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "AI-ModelScope/Llama-3.1-8B-Instruct"
 )
+LLAMA_3_1_8B_FP8_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "RedHatAI/Meta-Llama-3.1-8B-FP8"
+)
 LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "codelion/Llama-3.2-1B-Instruct-tool-calling-lora"
 )
