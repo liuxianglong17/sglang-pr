@@ -337,7 +337,7 @@ if __name__ == "__main__":
     # )
     # run_test_scenario(TestNonCIWithoutSoftWatchdog)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogTokenizerInit)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogTokenizer)
     unittest.TextTestRunner(verbosity=2).run(suite)
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogSchedulerInit)
     unittest.TextTestRunner(verbosity=2).run(suite)
