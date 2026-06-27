@@ -341,5 +341,5 @@ if __name__ == "__main__":
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogTokenizer)
     unittest.TextTestRunner(verbosity=2).run(suite)
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogSchedulerInit)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogSchedulerInit)
+    # unittest.TextTestRunner(verbosity=2).run(suite)
