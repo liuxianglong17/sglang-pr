@@ -216,17 +216,18 @@ class BaseTestTokenizerWatchdog:
         cls.stdout = io.StringIO()
         cls.stderr = io.StringIO()
 
-        cls.process = popen_launch_server(
-            QWEN3_0_6B_WEIGHTS_PATH,
-            DEFAULT_URL_FOR_TEST,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=[
-                "--soft-watchdog-timeout",
-                "20",
-                "--skip-server-warmup",
-            ],
-            return_stdout_stderr=(cls.stdout, cls.stderr),
-        )
+        with envs.SGLANG_TEST_STUCK_TOKENIZER.override(30):
+            cls.process = popen_launch_server(
+                QWEN3_0_6B_WEIGHTS_PATH,
+                DEFAULT_URL_FOR_TEST,
+                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                other_args=[
+                    "--soft-watchdog-timeout",
+                    "20",
+                    "--skip-server-warmup",
+                ],
+                return_stdout_stderr=(cls.stdout, cls.stderr),
+            )
 
     @classmethod
     def tearDownClass(cls):
@@ -237,15 +238,15 @@ class BaseTestTokenizerWatchdog:
     def test_tokenizer_watchdog(self):
         logger.info("Start call /generate API")
         try:
-            with envs.SGLANG_TEST_STUCK_TOKENIZER.override(30):
-                requests.post(
-                    DEFAULT_URL_FOR_TEST + "/generate",
-                    json={
-                        "text": "Hello, please repeat this sentence for 100 times.",
-                        "sampling_params": {"max_new_tokens": 100, "temperature": 0},
-                    },
-                    timeout=40,
-                )
+            
+            requests.post(
+                DEFAULT_URL_FOR_TEST + "/generate",
+                json={
+                    "text": "Hello, please repeat this sentence for 100 times.",
+                    "sampling_params": {"max_new_tokens": 100, "temperature": 0},
+                },
+                timeout=40,
+            )
         except requests.exceptions.ReadTimeout as e:
             logger.info(f"requests.post timeout (but expected): {e}")
 
@@ -271,17 +272,18 @@ class BaseTestSchedulerInitWatchdog:
         cls.stdout = io.StringIO()
         cls.stderr = io.StringIO()
 
-        cls.process = popen_launch_server(
-            QWEN3_0_6B_WEIGHTS_PATH,
-            DEFAULT_URL_FOR_TEST,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=[
-                "--soft-watchdog-timeout",
-                "20",
-                "--skip-server-warmup",
-            ],
-            return_stdout_stderr=(cls.stdout, cls.stderr),
-        )
+        with envs.SGLANG_TEST_STUCK_SCHEDULER_INIT.override(30):
+            cls.process = popen_launch_server(
+                QWEN3_0_6B_WEIGHTS_PATH,
+                DEFAULT_URL_FOR_TEST,
+                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                other_args=[
+                    "--soft-watchdog-timeout",
+                    "20",
+                    "--skip-server-warmup",
+                ],
+                return_stdout_stderr=(cls.stdout, cls.stderr),
+            )
 
     @classmethod
     def tearDownClass(cls):
@@ -292,15 +294,15 @@ class BaseTestSchedulerInitWatchdog:
     def test_scheduler_init_watchdog(self):
         logger.info("Start call /generate API")
         try:
-            with envs.SGLANG_TEST_STUCK_SCHEDULER_INIT.override(30):
-                requests.post(
-                    DEFAULT_URL_FOR_TEST + "/generate",
-                    json={
-                        "text": "Hello, please repeat this sentence for 100 times.",
-                        "sampling_params": {"max_new_tokens": 100, "temperature": 0},
-                    },
-                    timeout=40,
-                )
+            
+            requests.post(
+                DEFAULT_URL_FOR_TEST + "/generate",
+                json={
+                    "text": "Hello, please repeat this sentence for 100 times.",
+                    "sampling_params": {"max_new_tokens": 100, "temperature": 0},
+                },
+                timeout=40,
+            )
         except requests.exceptions.ReadTimeout as e:
             logger.info(f"requests.post timeout (but expected): {e}")
 
