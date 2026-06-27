@@ -76,7 +76,7 @@ class TestDisaggregationAscendPrefillLargerTP(TestDisaggregationBase):
             "--disaggregation-transfer-backend",
             "ascend",
             "--tp-size",
-            "2",
+            "4",
             "--base-gpu-id",
             #"4",
             "12",
