@@ -255,8 +255,7 @@ class BaseTestTokenizerWatchdog:
         logger.info("[Tokenizer] Test passed: Found expected watchdog timeout log")
 
 
-class TestSoftWatchdogTokenizer(BaseTestTokenizerWatchdog, CustomTestCase):
-    pass
+
 
 
 # ===================== SchedulerInit Watchdog Tests =====================
@@ -350,7 +349,4 @@ if __name__ == "__main__":
     # )
     # run_test_scenario(TestNonCIWithoutSoftWatchdog)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogTokenizer)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-    # suite = unittest.TestLoader().loadTestsFromTestCase(TestSoftWatchdogSchedulerInit)
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
