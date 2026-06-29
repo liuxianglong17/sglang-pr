@@ -266,13 +266,15 @@ class BaseTestSchedulerInitWatchdog:
     [Test Category] Parameter
     [Test Target] --soft-watchdog-timeout
     """
+    env_override = None
+    expected_message = None
 
     @classmethod
     def setUpClass(cls):
         cls.stdout = io.StringIO()
         cls.stderr = io.StringIO()
 
-        with envs.SGLANG_TEST_STUCK_SCHEDULER_INIT.override(30):
+        with cls.env_override():
             cls.process = popen_launch_server(
                 QWEN3_0_6B_WEIGHTS_PATH,
                 DEFAULT_URL_FOR_TEST,
@@ -294,25 +296,25 @@ class BaseTestSchedulerInitWatchdog:
     def test_scheduler_init_watchdog(self):
         logger.info("Start call /generate API")
         try:
-            
             requests.post(
                 DEFAULT_URL_FOR_TEST + "/generate",
                 json={
                     "text": "Hello, please repeat this sentence for 100 times.",
                     "sampling_params": {"max_new_tokens": 100, "temperature": 0},
                 },
-                timeout=40,
+                timeout=30,
             )
         except requests.exceptions.ReadTimeout as e:
             logger.info(f"requests.post timeout (but expected): {e}")
 
         combined_output = self.stdout.getvalue() + self.stderr.getvalue()
-        self.assertIn("Scheduler watchdog timeout", combined_output)
-        logger.info("[SchedulerInit] Test passed: Found expected watchdog timeout log")
+        self.assertIn(self.expected_message, combined_output)
 
 
 class TestSoftWatchdogSchedulerInit(BaseTestSchedulerInitWatchdog, CustomTestCase):
-    pass
+    env_override = lambda: envs.SGLANG_TEST_STUCK_DETOKENIZER.override(30)
+    expected_message = "DetokenizerManager watchdog timeout"
+
 
 
 # ===================== Main Function (Execute Four Scenarios) =====================
