@@ -260,7 +260,7 @@ class TestSoftWatchdogTokenizer(BaseTestTokenizerWatchdog, CustomTestCase):
 
 
 # ===================== SchedulerInit Watchdog Tests =====================
-class BaseTestSchedulerInitWatchdog:
+class BaseTestSoftWatchdog:
     """Testcase: Verify that soft-watchdog-timeout triggers correctly when Scheduler init is stuck.
 
     [Test Category] Parameter
@@ -311,11 +311,20 @@ class BaseTestSchedulerInitWatchdog:
         self.assertIn(self.expected_message, combined_output)
 
 
-class TestSoftWatchdogSchedulerInit(BaseTestSchedulerInitWatchdog, CustomTestCase):
+class TestSoftWatchdogDetokenizer(BaseTestSoftWatchdog, CustomTestCase):
     env_override = lambda: envs.SGLANG_TEST_STUCK_DETOKENIZER.override(30)
     expected_message = "DetokenizerManager watchdog timeout"
 
 
+class TestSoftWatchdogTokenizer(BaseTestSoftWatchdog, CustomTestCase):
+    env_override = lambda: envs.SGLANG_TEST_STUCK_TOKENIZER.override(30)
+    expected_message = "TokenizerManager watchdog timeout"
+
+
+class TestSoftWatchdogSchedulerInit(BaseTestSoftWatchdog, CustomTestCase):
+    env_override = lambda: envs.SGLANG_TEST_STUCK_SCHEDULER_INIT.override(30)
+    expected_message = "Scheduler watchdog timeout"
+    
 
 # ===================== Main Function (Execute Four Scenarios) =====================
 if __name__ == "__main__":
